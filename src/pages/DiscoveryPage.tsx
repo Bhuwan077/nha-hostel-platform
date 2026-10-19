@@ -5,7 +5,7 @@ import { HostelCard } from '../components/public/HostelCard';
 import { HostelFilterBar } from '../components/public/HostelFilterBar';
 import { InteractiveMap } from '../components/public/InteractiveMap';
 import { BookingModal } from '../components/public/BookingModal';
-import { ShieldCheck, Search, Sparkles, Building, MapPin } from 'lucide-react';
+import { ShieldCheck, Search, Sparkles, Building, MapPin, CheckCircle2, Award, Zap } from 'lucide-react';
 
 interface DiscoveryPageProps {
   onSelectHostel: (branchId: string) => void;
@@ -26,46 +26,51 @@ export const DiscoveryPage: React.FC<DiscoveryPageProps> = ({
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map' | 'split'>('split');
 
-  // Interactive Map selection
+  // Map selection
   const [selectedPinBranchId, setSelectedPinBranchId] = useState<string | null>(null);
 
   // Booking Modal
   const [bookingBranch, setBookingBranch] = useState<HostelBranch | null>(null);
 
+  // Quick preset chips
+  const quickFilterPresets = [
+    { label: '⚙️ Pulchowk Engineering Campus', query: 'pulchowk' },
+    { label: '🎓 New Baneshwor (Apex / St. Xaviers)', query: 'baneshwor' },
+    { label: '📚 Tribhuvan University (Kirtipur)', query: 'kirtipur' },
+    { label: '👩 Girls Hostels Only', gender: 'girls' as const },
+    { label: '🏔️ Pokhara Lakeside', city: 'Pokhara' },
+    { label: '✓ NHA Certified Only', verified: true },
+  ];
+
   // Filtered branches
   const filteredBranches = useMemo(() => {
     return branches.filter((b) => {
-      // Exclude suspended listings
       if (b.verificationStatus === 'suspended') return false;
 
-      // Keyword search (FR-A1.3)
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         const matchesName = b.name.toLowerCase().includes(query);
         const matchesArea = b.area.toLowerCase().includes(query);
         const matchesLandmark = b.landmark.toLowerCase().includes(query);
         const matchesCity = b.city.toLowerCase().includes(query);
-        if (!matchesName && !matchesArea && !matchesLandmark && !matchesCity) {
+        const matchesAmenities = b.amenities.some((a) => a.toLowerCase().includes(query));
+        if (!matchesName && !matchesArea && !matchesLandmark && !matchesCity && !matchesAmenities) {
           return false;
         }
       }
 
-      // City
       if (selectedCity !== 'all' && b.city.toLowerCase() !== selectedCity.toLowerCase()) {
         return false;
       }
 
-      // Gender (FR-A1.2)
       if (selectedGender !== 'all' && b.genderPolicy !== selectedGender) {
         return false;
       }
 
-      // Price (FR-A1.2)
       if (b.minPrice > maxPrice) {
         return false;
       }
 
-      // NHA Verified filter (FR-A1.4)
       if (verifiedOnly && b.verificationStatus !== 'verified') {
         return false;
       }
@@ -74,34 +79,67 @@ export const DiscoveryPage: React.FC<DiscoveryPageProps> = ({
     });
   }, [branches, searchQuery, selectedCity, selectedGender, maxPrice, verifiedOnly]);
 
+  const totalBeds = branches.reduce((sum, b) => sum + b.totalBeds, 0);
+  const totalVacant = branches.reduce((sum, b) => sum + (b.totalBeds - b.occupiedBeds), 0);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      {/* Hero Banner */}
-      <div className="relative rounded-3xl bg-gradient-to-r from-blue-950 via-indigo-900 to-slate-900 text-white p-8 md:p-12 overflow-hidden shadow-xl">
-        <div className="relative z-10 max-w-2xl space-y-3">
-          <div className="inline-flex items-center space-x-2 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-1 rounded-full text-xs font-bold">
-            <ShieldCheck className="w-4 h-4" />
-            <span>Nepal Hostel Association Official Public Directory</span>
+      {/* Hero Banner with Rich Nepal Theme */}
+      <div className="relative rounded-3xl bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 text-white p-8 md:p-12 overflow-hidden shadow-2xl border border-slate-800">
+        <div className="relative z-10 max-w-3xl space-y-4">
+          <div className="inline-flex items-center space-x-2 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3.5 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>Official Nepal Hostel Association Public Directory & Registry</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
-            Safe, Verified Student Residences Across Nepal
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
+            Verified, Safe & Certified Student Hostels in Nepal
           </h1>
 
-          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-            Discover verified member hostels near top colleges in Kathmandu, Lalitpur, Bhaktapur, and Pokhara. Compare live room vacancies, authentic mess menus, and verified resident ratings.
+          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-2xl">
+            Compare accredited hostels near Tribhuvan University, IOE Pulchowk, St. Xavier's, and Pokhara. Verified room vacancies, live mess menus, transparent fee ledgers, and secure eSewa/Khalti booking advance.
           </p>
 
-          <div className="pt-2 flex flex-wrap gap-2 text-[11px] font-semibold text-slate-300">
-            <span className="bg-white/10 px-2.5 py-1 rounded-lg">🎓 Near Apex & St. Xavier's</span>
-            <span className="bg-white/10 px-2.5 py-1 rounded-lg">⚙️ Opposite Pulchowk Campus</span>
-            <span className="bg-white/10 px-2.5 py-1 rounded-lg">📚 Close to Tribhuvan University</span>
-            <span className="bg-white/10 px-2.5 py-1 rounded-lg">🏔️ Pokhara Lakeside Hub</span>
+          {/* Live Stats Pill Row */}
+          <div className="pt-2 flex flex-wrap gap-3 text-xs">
+            <div className="bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 flex items-center space-x-2">
+              <Building className="w-4 h-4 text-blue-300" />
+              <span><strong>{branches.length}</strong> Registered Properties</span>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 flex items-center space-x-2">
+              <Award className="w-4 h-4 text-emerald-400" />
+              <span><strong>{totalVacant}</strong> Beds Open for Nov 2026</span>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 flex items-center space-x-2">
+              <Zap className="w-4 h-4 text-amber-400" />
+              <span>24/7 Solar & Power Backup</span>
+            </div>
           </div>
         </div>
 
         {/* Decorative background glow */}
-        <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-blue-600/20 to-transparent pointer-events-none"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-blue-600/20 via-indigo-500/10 to-transparent pointer-events-none"></div>
+      </div>
+
+      {/* Quick Filter Preset Chips */}
+      <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none text-xs">
+        <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider whitespace-nowrap">
+          Quick Filters:
+        </span>
+        {quickFilterPresets.map((chip, idx) => (
+          <button
+            key={idx}
+            onClick={() => {
+              if (chip.query) setSearchQuery(chip.query);
+              if (chip.gender) setSelectedGender(chip.gender);
+              if (chip.city) setSelectedCity(chip.city);
+              if (chip.verified) setVerifiedOnly(true);
+            }}
+            className="px-3 py-1.5 bg-white hover:bg-blue-50 hover:text-blue-900 border border-slate-200 rounded-xl font-semibold text-slate-700 whitespace-nowrap transition-colors shadow-xs"
+          >
+            {chip.label}
+          </button>
+        ))}
       </div>
 
       {/* Filter Bar */}
@@ -121,11 +159,11 @@ export const DiscoveryPage: React.FC<DiscoveryPageProps> = ({
         resultsCount={filteredBranches.length}
       />
 
-      {/* Main View Area: Split or Grid */}
+      {/* Main View: Split Map & Cards or Full Grid */}
       {viewMode === 'split' ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Interactive Map (Sticky on Desktop) */}
-          <div className="lg:col-span-5 lg:sticky lg:top-28">
+          {/* Interactive Map */}
+          <div className="lg:col-span-5 lg:sticky lg:top-32 space-y-3">
             <InteractiveMap
               branches={filteredBranches}
               selectedBranchId={selectedPinBranchId}
@@ -134,9 +172,12 @@ export const DiscoveryPage: React.FC<DiscoveryPageProps> = ({
                 onSelectHostel(id);
               }}
             />
+            <p className="text-[11px] text-slate-400 text-center">
+              📍 Click any map pin to view instant vacancy and room rates.
+            </p>
           </div>
 
-          {/* Cards Grid */}
+          {/* Cards Column */}
           <div className="lg:col-span-7 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredBranches.map((branch) => (
@@ -153,10 +194,10 @@ export const DiscoveryPage: React.FC<DiscoveryPageProps> = ({
 
             {filteredBranches.length === 0 && (
               <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8 space-y-3">
-                <Building className="w-10 h-10 text-slate-300 mx-auto" />
-                <h3 className="font-bold text-slate-700 text-sm">No Hostels Match Your Filter Criteria</h3>
-                <p className="text-xs text-slate-500">
-                  Try adjusting the maximum price or selecting "All Cities".
+                <Building className="w-12 h-12 text-slate-300 mx-auto" />
+                <h3 className="font-extrabold text-slate-800 text-base">No Hostels Match Your Criteria</h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Try adjusting the maximum budget or clearing your keyword filter.
                 </p>
                 <button
                   onClick={() => {
@@ -166,7 +207,7 @@ export const DiscoveryPage: React.FC<DiscoveryPageProps> = ({
                     setMaxPrice(22000);
                     setVerifiedOnly(false);
                   }}
-                  className="px-4 py-2 bg-blue-900 text-white font-bold rounded-xl text-xs"
+                  className="px-5 py-2.5 bg-blue-900 text-white font-bold rounded-xl text-xs hover:bg-blue-800 transition-colors"
                 >
                   Clear All Filters
                 </button>
