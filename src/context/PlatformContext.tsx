@@ -135,7 +135,7 @@ export const PlatformProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [bookings, setBookings] = useState<BookingRequest[]>(() => loadFromStorage('bookings', INITIAL_BOOKINGS));
   const [chatThreads, setChatThreads] = useState<ChatThread[]>(() => loadFromStorage('chats', INITIAL_CHAT_THREADS));
   const [transfers, setTransfers] = useState<BranchTransferRequest[]>(() => loadFromStorage('transfers', INITIAL_TRANSFERS));
-  const [wishlist, setWishlist] = useState<string[]>(() => loadFromStorage('wishlist', ['branch-ktm-1', 'branch-lalitpur-1']));
+  const [wishlist, setWishlist] = useState<string[]>(() => loadFromStorage('wishlist', []));
 
   // Sync to localStorage
   useEffect(() => saveToStorage('branches', branches), [branches]);
@@ -574,7 +574,7 @@ export const PlatformProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setBookings(INITIAL_BOOKINGS);
     setChatThreads(INITIAL_CHAT_THREADS);
     setTransfers(INITIAL_TRANSFERS);
-    setWishlist(['branch-ktm-1', 'branch-lalitpur-1']);
+    setWishlist([]);
   };
 
   return (

@@ -45,6 +45,7 @@ const PlatformApp: React.FC = () => {
       <Navbar
         onOpenWishlist={() => setIsWishlistOpen(true)}
         onOpenChat={() => handleOpenChat()}
+        onNavigateHome={() => setSelectedHostelId(null)}
       />
 
       {/* Main Dynamic View */}
